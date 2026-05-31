@@ -2,15 +2,10 @@
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QMainWindow>
+#include <QShortcut>
 
-int main(int argc, char *argv[]) {
-    QApplication trips(argc, argv);
-    QMainWindow tripsWindow;
-    QSqlDatabase tripsdb = QSqlDatabase::addDatabase("QSQLITE");
+void initdb(QSqlDatabase &tripsdb){
     QSqlQuery tripsquery(tripsdb);
-    const char *dbPath = "trips.db";
-
-    tripsdb.setDatabaseName(dbPath);
     tripsdb.open();
     tripsquery.exec(
         "CREATE TABLE IF NOT EXISTS departments ("
@@ -47,8 +42,27 @@ int main(int argc, char *argv[]) {
         ")"
     );
     tripsquery.finish();
+    tripsquery.exec(
+        "INSERT INTO departments(name, phone_number) VALUES"
+        "('Отдел кадров', '+7-391-151-00-01'),"
+        "('Отдел дизайна', '+7-391-151-00-02'),"
+        "('Отдел програмирования', '+7-391-151-00-03');"
+    );
+    tripsquery.finish();
     tripsdb.close();
+}
 
+int main(int argc, char *argv[]) {
+    QApplication trips(argc, argv);
+    QMainWindow tripsWindow;
+    new QShortcut(QKeySequence("CTRL+W"), &tripsWindow, SLOT(close()));
+    new QShortcut(QKeySequence("Esc"), &tripsWindow, SLOT(close()));
+    QSqlDatabase tripsdb = QSqlDatabase::addDatabase("QSQLITE");
+    QSqlQuery tripsquery(tripsdb);
+    const char *dbPath = "trips.db";
+    tripsdb.setDatabaseName(dbPath);
+    
+    initdb(tripsdb);
 
     tripsWindow.setWindowTitle("Командировки");
     tripsWindow.resize(800, 600);

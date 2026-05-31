@@ -11,7 +11,6 @@
 |tripsWindow.show();|Показ окна на экране|
 |return trips.exec();|просто return|
 
-
 ## действия с бд
 
 |код|объяснение|
@@ -22,8 +21,8 @@
 |tripsdb.setDatabaseName(dbPath);|файл бд создается автоматически|
 |tripsdb.open();|открытие бд|
 |tripsquery.exec()|запросы к бд|
-|"CREATE TABLE IF NOT EXISTS имя_таблицы("|создать таблицу если ещё не создана|
-|"id INTEGER PRIMARY KEY AUTOINCREMENT," |id - первичный ключ в таблице|
+|"CREATE TABLE IF NOT EXISTS имя_таблицы"|создать таблицу если ещё не создана|
+|"id INTEGER PRIMARY KEY AUTOINCREMENT,"|id - первичный ключ в таблице|
 |"name TEXT NOT NULL,"|текстовое поле, которое не должно быть пустым|
 |"phone_number TEXT"|текстовое поле|
 |"departament_id INTEGER,"|числовое поле|
@@ -32,3 +31,9 @@
 |"total INTEGER GENERATED ALWAYS AS ((count_days * allowance) + price) STORED,"|подсчет общей стоимости поездки|
 |tripsquery.finish();|завершение запроса к бд|
 |tripsdb.close();|закрытие бд|
+
+## удобство использования
+
+|код|объяснение|
+|-|-|
+|new QShortcut(QKeySequence("CTRL+W"), &tripsWindow, SLOT(close()));|сочетание клавиш, закрывающее окно tripsWindow. сохранен в динамичекой памяти|
