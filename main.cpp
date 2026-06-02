@@ -89,12 +89,9 @@ void initdb(QSqlDatabase &tripsdb){
     );
     tripsquery.finish();
 }
-
 int main(int argc, char *argv[]) {
     QApplication trips(argc, argv);
     QMainWindow tripsWindow;
-    new QShortcut(QKeySequence("CTRL+W"), &tripsWindow, SLOT(close()));
-    new QShortcut(QKeySequence("Esc"), &tripsWindow, SLOT(close()));
     QSqlDatabase tripsdb = QSqlDatabase::addDatabase("QSQLITE");
     QSqlQuery tripsquery(tripsdb);
     const char *dbPath = "trips.db";
@@ -109,12 +106,12 @@ int main(int argc, char *argv[]) {
     QPushButton *button1 = new QPushButton("кнопка 1", leftButtonPanel);
     QPushButton *button2 = new QPushButton("кнопка 2", leftButtonPanel);
     QPushButton *button3 = new QPushButton("кнопка 3", leftButtonPanel);
+    leftButtonPanel->setFixedWidth(300);
     leftButtonLayout->addWidget(button1);
     leftButtonLayout->addWidget(button2);
     leftButtonLayout->addWidget(button3);
     leftButtonLayout->addStretch();
-    leftButtonPanel->setFixedHeight(250);
-    QTabWidget *tripsWindowTab = new QTabWidget(&tripsWindow); 
+    QTabWidget *tripsWindowTab = new QTabWidget(&tripsWindow);
     QSqlTableModel *depatrmentsTable = new QSqlTableModel(nullptr, tripsdb);
     depatrmentsTable->setTable ("departments");
     depatrmentsTable->select();
@@ -135,8 +132,13 @@ int main(int argc, char *argv[]) {
     tripsWindowTab->addTab(tripsTab, "Командировки");
     mainLayout->addWidget(leftButtonPanel);
     mainLayout->addWidget(tripsWindowTab);
+    new QShortcut(QKeySequence("CTRL+W"), &tripsWindow, SLOT(close()));
+    new QShortcut(QKeySequence("Esc"), &tripsWindow, SLOT(close()));
+    new QShortcut(QKeySequence("1"), &tripsWindow, [&]() {tripsWindowTab->setCurrentIndex(0);});
+    new QShortcut(QKeySequence("2"), &tripsWindow, [&]() {tripsWindowTab->setCurrentIndex(1);});
+    new QShortcut(QKeySequence("3"), &tripsWindow, [&]() {tripsWindowTab->setCurrentIndex(2);});
     tripsWindow.setWindowTitle("Курсовая Работа - БД Командировки");
-    tripsWindow.resize(800, 600);
+    tripsWindow.resize(900, 700);
     tripsWindow.show();
     tripsWindow.setCentralWidget(mainWidget);
     return trips.exec();
