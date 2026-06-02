@@ -11,6 +11,14 @@
 |tripsWindow.show();|Показ окна на экране|
 |return trips.exec();|просто return|
 
+## удобство использования
+
+|код|объяснение|
+|-|-|
+|new QShortcut(QKeySequence("CTRL+W"), &tripsWindow, SLOT(close()));|сочетание клавиш, закрывающее окно tripsWindow. сохранен в динамичекой памяти|
+|new QShortcut(QKeySequence("Esc"), &tripsWindow, SLOT(close()));|тоже самое только Esc|
+|new QShortcut(QKeySequence("Ctrl+R"), &tripsWindow, [&]() { initdb(tripsdb); });|сочетание клавиш, вызывающее функцию initdb через лямбда-функцию|
+
 ## действия с бд
 
 |код|объяснение|
@@ -18,9 +26,12 @@
 |QSqlDatabase tripsdb = QSqlDatabase::addDatabase("QSQLITE");|Создание объекта tripsdb, c драйвером бд QSQLITE|
 |QSqlQuery tripsquery(tripsdb);|Создание объекта tripsquery с которым можно делать запросы к объекту tripsdb|
 |const char *dbPath = "trips.db";|относительный путь к файлу бд|
+|new QShortcut(QKeySequence("Ctrl+R"), &tripsWindow, [&]() { initdb(tripsdb); });|сочетание клавиш, вызывающее функцию initdb через лямбда-функцию|
 |tripsdb.setDatabaseName(dbPath);|файл бд создается автоматически|
 |tripsdb.open();|открытие бд|
 |tripsquery.exec()|запросы к бд|
+|tripsquery.finish();|завершение запроса к бд|
+|tripsdb.close();|закрытие бд|
 |"CREATE TABLE IF NOT EXISTS имя_таблицы"|создать таблицу если ещё не создана|
 |"id INTEGER PRIMARY KEY AUTOINCREMENT,"|id - первичный ключ в таблице|
 |"name TEXT NOT NULL,"|текстовое поле, которое не должно быть пустым|
@@ -29,11 +40,5 @@
 |"departure_date DATE,"|поле с датой|
 |"FOREIGN KEY(departament_id) REFERENCES departaments(id)"|подключение внешнего ключа из таблицы departaments|
 |"total INTEGER GENERATED ALWAYS AS ((count_days * allowance) + price) STORED,"|подсчет общей стоимости поездки|
-|tripsquery.finish();|завершение запроса к бд|
-|tripsdb.close();|закрытие бд|
-
-## удобство использования
-
-|код|объяснение|
-|-|-|
-|new QShortcut(QKeySequence("CTRL+W"), &tripsWindow, SLOT(close()));|сочетание клавиш, закрывающее окно tripsWindow. сохранен в динамичекой памяти|
+|"INSERT INTO таблица(столбец1, столбец2) VALUES"|заполнение столбцов в таблице|
+|"('Отдел кадров', '+7-391-151-00-01'),"|пример залоплнения данными|
