@@ -6,6 +6,8 @@
 #include <QTabWidget>
 #include <QTableView>
 #include <QSqlTableModel>
+#include <QBoxLayout>
+#include <QPushButton>
 
 void initdb(QSqlDatabase &tripsdb){
     QSqlQuery tripsquery(tripsdb);
@@ -98,8 +100,21 @@ int main(int argc, char *argv[]) {
     const char *dbPath = "trips.db";
     tripsdb.setDatabaseName(dbPath);
     if (!tripsdb.open()) return 1;
+    tripsdb.exec("PRAGMA foreign_keys = ON;");
     initdb(tripsdb); 
-    QTabWidget *tripsWindowTab = new QTabWidget(&tripsWindow);
+    QWidget *mainWidget = new QWidget(&tripsWindow);
+    QHBoxLayout *mainLayout = new QHBoxLayout(mainWidget);
+    QWidget *leftButtonPanel = new QWidget(&tripsWindow);
+    QVBoxLayout *leftButtonLayout = new QVBoxLayout(leftButtonPanel);
+    QPushButton *button1 = new QPushButton("кнопка 1", leftButtonPanel);
+    QPushButton *button2 = new QPushButton("кнопка 2", leftButtonPanel);
+    QPushButton *button3 = new QPushButton("кнопка 3", leftButtonPanel);
+    leftButtonLayout->addWidget(button1);
+    leftButtonLayout->addWidget(button2);
+    leftButtonLayout->addWidget(button3);
+    leftButtonLayout->addStretch();
+    leftButtonPanel->setFixedHeight(250);
+    QTabWidget *tripsWindowTab = new QTabWidget(&tripsWindow); 
     QSqlTableModel *depatrmentsTable = new QSqlTableModel(nullptr, tripsdb);
     depatrmentsTable->setTable ("departments");
     depatrmentsTable->select();
@@ -117,10 +132,12 @@ int main(int argc, char *argv[]) {
     tripsTable->select();
     QTableView *tripsTab = new QTableView;
     tripsTab->setModel(tripsTable);
-    tripsWindowTab->addTab(tripsTab, "Командировки");        
+    tripsWindowTab->addTab(tripsTab, "Командировки");
+    mainLayout->addWidget(leftButtonPanel);
+    mainLayout->addWidget(tripsWindowTab);
     tripsWindow.setWindowTitle("Курсовая Работа - БД Командировки");
     tripsWindow.resize(800, 600);
     tripsWindow.show();
-    tripsWindow.setCentralWidget(tripsWindowTab);
+    tripsWindow.setCentralWidget(mainWidget);
     return trips.exec();
 }
