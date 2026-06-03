@@ -103,7 +103,7 @@ int main(int argc, char *argv[]) {
     QHBoxLayout *mainLayout = new QHBoxLayout(mainWidget);
     QWidget *leftButtonPanel = new QWidget(&tripsWindow);
     QVBoxLayout *leftButtonLayout = new QVBoxLayout(leftButtonPanel);
-    QPushButton *button1 = new QPushButton("кнопка 1", leftButtonPanel);
+    QPushButton *button1 = new QPushButton("Добавить строку", leftButtonPanel);
     QPushButton *button2 = new QPushButton("кнопка 2", leftButtonPanel);
     QPushButton *button3 = new QPushButton("кнопка 3", leftButtonPanel);
     leftButtonPanel->setFixedWidth(300);
@@ -137,6 +137,20 @@ int main(int argc, char *argv[]) {
     new QShortcut(QKeySequence("1"), &tripsWindow, [&]() {tripsWindowTab->setCurrentIndex(0);});
     new QShortcut(QKeySequence("2"), &tripsWindow, [&]() {tripsWindowTab->setCurrentIndex(1);});
     new QShortcut(QKeySequence("3"), &tripsWindow, [&]() {tripsWindowTab->setCurrentIndex(2);});
+    QObject::connect(button1, &QPushButton::clicked, [=]() {
+        int selectTab = tripsWindowTab->currentIndex();
+        switch (selectTab){
+        case 0:
+            depatrmentsTable->insertRow(depatrmentsTable->rowCount());
+            break;
+        case 1:
+            workersTable->insertRow(workersTable->rowCount());
+            break;
+        case 2:
+            tripsTable->insertRow(tripsTable->rowCount());
+            break;
+        }
+    });
     tripsWindow.setWindowTitle("Курсовая Работа - БД Командировки");
     tripsWindow.resize(900, 700);
     tripsWindow.show();
