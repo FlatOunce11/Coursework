@@ -103,8 +103,8 @@ int main(int argc, char *argv[]) {
     QHBoxLayout *mainLayout = new QHBoxLayout(mainWidget);
     QWidget *leftButtonPanel = new QWidget(&tripsWindow);
     QVBoxLayout *leftButtonLayout = new QVBoxLayout(leftButtonPanel);
-    QPushButton *button1 = new QPushButton("Добавить строку", leftButtonPanel);
-    QPushButton *button2 = new QPushButton("кнопка 2", leftButtonPanel);
+    QPushButton *button1 = new QPushButton("Добавить строку (i)", leftButtonPanel);
+    QPushButton *button2 = new QPushButton("Удалить строку (d)", leftButtonPanel);
     QPushButton *button3 = new QPushButton("кнопка 3", leftButtonPanel);
     leftButtonPanel->setFixedWidth(300);
     leftButtonLayout->addWidget(button1);
