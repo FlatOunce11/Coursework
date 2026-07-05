@@ -1,0 +1,21 @@
+CXX := g++
+CXXFLAGS := -std=c++17 -O2 -Wall -Wextra
+INCLUDES := -I/usr/include/qt6 -I/usr/include/qt6/QtWidgets -I/usr/include/qt6/QtGui -I/usr/include/qt6/QtSql -I/usr/include/qt6/QtCore
+LDFLAGS := -L/usr/lib64
+LIBS := -lQt6Widgets -lQt6Gui -lQt6Sql -lQt6Core -lGLX -lOpenGL -lpthread
+SRC := main.cpp
+OBJ := $(SRC:.cpp=.o)
+TARGET := project
+
+.PHONY: all clean
+
+all: $(TARGET)
+
+$(TARGET): $(OBJ)
+	$(CXX) $(LDFLAGS) -o $@ $^ $(LIBS)
+
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c -o $@ $<
+
+clean:
+	rm -f $(OBJ) $(TARGET)

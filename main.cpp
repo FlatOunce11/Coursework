@@ -8,6 +8,10 @@
 #include <QSqlTableModel>
 #include <QBoxLayout>
 #include <QPushButton>
+#include <QVariant>
+#include <QDir>
+#include <QDebug>
+#include <QSqlError>
 
 void initdb(QSqlDatabase &tripsdb){
     QSqlQuery tripsquery(tripsdb);
@@ -46,15 +50,97 @@ void initdb(QSqlDatabase &tripsdb){
         ")"
     );
     tripsquery.finish();
+
     tripsquery.exec(
-        "INSERT OR REPLACE INTO departments(id, name, phone_number) VALUES"
+        "INSERT OR IGNORE INTO departments(id, name, phone_number) VALUES"
+        "(0, 'deleted data', NULL)"
+    );
+    tripsquery.finish();
+
+    tripsquery.exec(
+        "INSERT OR IGNORE INTO workers(id, surname, name, patronymic, departament_id, address, phone_number) VALUES"
+        "(0, 'deleted data', 'deleted data', 'deleted data', 0, NULL, NULL)"
+    );
+    tripsquery.finish();
+}
+
+void addEmptyRow(QSqlDatabase &tripsdb, int tabIndex){
+    QSqlQuery tripsquery(tripsdb);
+    bool ok = false;
+    switch (tabIndex) {
+    case 0:
+        ok = tripsquery.exec("INSERT INTO departments (name, phone_number) VALUES ('', NULL)");
+        break;
+    case 1:
+        ok = tripsquery.exec("INSERT INTO workers (surname, name, patronymic, departament_id, address, phone_number) VALUES ('', '', '', NULL, NULL, NULL)");
+        break;
+    case 2:
+        ok = tripsquery.exec("INSERT INTO trips (worker_id, city, departure_date, count_days, allowance, price) VALUES (NULL, '', NULL, NULL, NULL, NULL)");
+        break;
+    default:
+        return;
+    }
+    tripsquery.finish();
+    if (!ok) {
+        qDebug() << "Insert failed:" << tripsquery.lastError().text();
+    }
+}
+
+void refreshAllTables(QSqlTableModel *departmentsTable, QSqlTableModel *workersTable, QSqlTableModel *tripsTable){
+    departmentsTable->select();
+    workersTable->select();
+    tripsTable->select();
+}
+
+void deleteCurrentRow(QTableView *view, QSqlTableModel *model, QSqlDatabase &tripsdb, int tabIndex){
+    if (!view || !model) {
+        return;
+    }
+
+    QModelIndex index = view->currentIndex();
+    if (!index.isValid()) {
+        return;
+    }
+
+    int row = index.row();
+    QModelIndex idIndex = model->index(row, 0);
+    int id = model->data(idIndex).toInt();
+
+    if (tabIndex == 0) {
+        QSqlQuery query(tripsdb);
+        query.prepare("UPDATE workers SET departament_id = 0 WHERE departament_id = :dept_id");
+        query.bindValue(":dept_id", id);
+        query.exec();
+        query.finish();
+    } else if (tabIndex == 1) {
+        QSqlQuery query(tripsdb);
+        query.prepare("UPDATE trips SET worker_id = 0 WHERE worker_id = :worker_id");
+        query.bindValue(":worker_id", id);
+        query.exec();
+        query.finish();
+    }
+
+    if (model->removeRow(row)) {
+        model->submitAll();
+        model->select();
+        if (model->rowCount() > 0) {
+            int nextRow = qMin(row, model->rowCount() - 1);
+            view->setCurrentIndex(model->index(nextRow, 0));
+        }
+    }
+}
+
+void fillTemplateData(QSqlDatabase &tripsdb){
+    QSqlQuery tripsquery(tripsdb);
+    tripsquery.exec(
+        "INSERT OR IGNORE INTO departments(id, name, phone_number) VALUES"
         "(1, 'Отдел кадров', '+7-391-151-00-01'),"
         "(2, 'Отдел дизайна', '+7-391-151-00-02'),"
         "(3, 'Отдел програмирования', '+7-391-151-00-03');"
     );
     tripsquery.finish();
     tripsquery.exec(
-        "INSERT OR REPLACE INTO workers(id, surname, name, patronymic, departament_id, address, phone_number) VALUES"
+        "INSERT OR IGNORE INTO workers(id, surname, name, patronymic, departament_id, address, phone_number) VALUES"
         "(1, 'Ковальский', 'Алексей', 'Валерьевич', '1', 'ул. Кельвина, д. 506', '+7-392-151-01-01'),"
         "(2, 'Осипов', 'Олег', 'Васильевич', '1', 'ул. Ньюэлла, д. 2', '+7-392-151-01-02'),"
         "(3, 'Киселев', 'Дмитрий', 'Сергеевич', '1', 'ул. Платиновая, д. 300', '+7-392-151-01-03'),"
@@ -67,7 +153,7 @@ void initdb(QSqlDatabase &tripsdb){
     );
     tripsquery.finish();
     tripsquery.exec(
-        "INSERT OR REPLACE INTO trips(id, worker_id, city, departure_date, count_days, allowance, price) VALUES"
+        "INSERT OR IGNORE INTO trips(id, worker_id, city, departure_date, count_days, allowance, price) VALUES"
         "(1, 1, 'Тольятти', '2026-03-12', 3, 2300, 15000),"
         "(2, 1, 'Киров', '2026-03-13', 5, 4700, 23400),"
         "(3, 2, 'Пермь', '2026-03-14', 4, 850, 26000),"
@@ -94,17 +180,17 @@ int main(int argc, char *argv[]) {
     QMainWindow tripsWindow;
     QSqlDatabase tripsdb = QSqlDatabase::addDatabase("QSQLITE");
     QSqlQuery tripsquery(tripsdb);
-    const char *dbPath = "trips.db";
+    QString dbPath = QDir(QCoreApplication::applicationDirPath()).filePath("trips.db");
     tripsdb.setDatabaseName(dbPath);
     if (!tripsdb.open()) return 1;
     tripsdb.exec("PRAGMA foreign_keys = ON;");
-    initdb(tripsdb); 
+    initdb(tripsdb);
     QWidget *mainWidget = new QWidget(&tripsWindow);
     QHBoxLayout *mainLayout = new QHBoxLayout(mainWidget);
     QWidget *leftButtonPanel = new QWidget(&tripsWindow);
     QVBoxLayout *leftButtonLayout = new QVBoxLayout(leftButtonPanel);
-    QPushButton *button1 = new QPushButton("Добавить строку (i)", leftButtonPanel);
-    QPushButton *button2 = new QPushButton("Удалить строку (d)", leftButtonPanel);
+    QPushButton *button1 = new QPushButton("Добавить строку (Ctrl+I)", leftButtonPanel);
+    QPushButton *button2 = new QPushButton("Удалить строку (Ctrl+D)", leftButtonPanel);
     QPushButton *button3 = new QPushButton("кнопка 3", leftButtonPanel);
     leftButtonPanel->setFixedWidth(300);
     leftButtonLayout->addWidget(button1);
@@ -137,19 +223,31 @@ int main(int argc, char *argv[]) {
     new QShortcut(QKeySequence("1"), &tripsWindow, [&]() {tripsWindowTab->setCurrentIndex(0);});
     new QShortcut(QKeySequence("2"), &tripsWindow, [&]() {tripsWindowTab->setCurrentIndex(1);});
     new QShortcut(QKeySequence("3"), &tripsWindow, [&]() {tripsWindowTab->setCurrentIndex(2);});
-    QObject::connect(button1, &QPushButton::clicked, [=]() {
+
+    QShortcut *addShortcut = new QShortcut(QKeySequence("Ctrl+I"), &tripsWindow);
+    QObject::connect(addShortcut, &QShortcut::activated, button1, &QPushButton::click);
+
+    QShortcut *deleteShortcut = new QShortcut(QKeySequence("Ctrl+D"), &tripsWindow);
+    QObject::connect(deleteShortcut, &QShortcut::activated, button2, &QPushButton::click);
+
+    QObject::connect(button1, &QPushButton::clicked, [&]() {
         int selectTab = tripsWindowTab->currentIndex();
-        switch (selectTab){
-        case 0:
-            depatrmentsTable->insertRow(depatrmentsTable->rowCount());
-            break;
-        case 1:
-            workersTable->insertRow(workersTable->rowCount());
-            break;
-        case 2:
-            tripsTable->insertRow(tripsTable->rowCount());
-            break;
+        addEmptyRow(tripsdb, selectTab);
+        refreshAllTables(depatrmentsTable, workersTable, tripsTable);
+    });
+    QObject::connect(button2, &QPushButton::clicked, [&]() {
+        QList<QTableView*> views = {depatrmentsTab, workersTab, tripsTab};
+        QList<QSqlTableModel*> models = {depatrmentsTable, workersTable, tripsTable};
+        int selectTab = tripsWindowTab->currentIndex();
+        if (selectTab >= 0 && selectTab < views.size()) {
+            deleteCurrentRow(views.at(selectTab), models.at(selectTab), tripsdb, selectTab);
         }
+        refreshAllTables(depatrmentsTable, workersTable, tripsTable);
+    });
+
+    QObject::connect(button3, &QPushButton::clicked, [&]() {
+        fillTemplateData(tripsdb);
+        refreshAllTables(depatrmentsTable, workersTable, tripsTable);
     });
     tripsWindow.setWindowTitle("Курсовая Работа - БД Командировки");
     tripsWindow.resize(900, 700);
